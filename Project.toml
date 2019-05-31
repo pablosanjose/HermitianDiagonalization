@@ -1,0 +1,14 @@
+name = "HermitianDiagonalization"
+uuid = "7d14e7fa-22d3-5249-9a2a-f29604f9a34b"
+authors = ["Pablo San-Jose <lekand@gmail.com>"]
+
+[deps]
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
+
+[compat]
+julia = "^1"

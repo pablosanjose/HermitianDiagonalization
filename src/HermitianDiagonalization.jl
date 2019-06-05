@@ -142,7 +142,7 @@ function (d::Diagonalizer{<:Direct})(nev::Integer; kw...)
 end
 sortfunc(point) = isfinite(point) ? (λ -> abs(λ - point)) : (point > 0 ? reverse : identity)
 
-function (d::Diagonalizer{<:IRAM_Arpack,Tv})(nev::Integer; kw...) where {Tv}
+function (d::Diagonalizer{<:IRAM_Arpack,Tv})(nev::Integer; precond = true, kw...) where {Tv}
     if isfinite(d.point)
         which = :LM
         # sigma = real(Tv) === Tv ? d.point : d.point + 1.0im
@@ -156,8 +156,10 @@ function (d::Diagonalizer{<:IRAM_Arpack,Tv})(nev::Integer; kw...) where {Tv}
     end
     λs, ϕs, _ = eigs(d.matrix; nev = nev, sigma = sigma, which = which, 
                              v0 = d.method.precond, kw...)
-    d.method.precond .= zero(Tv)
-    foreach(ϕ -> (d.method.precond .+= ϕ), eachcol(ϕs))
+    if precond
+        d.method.precond .= zero(Tv)
+        foreach(ϕ -> (d.method.precond .+= ϕ), eachcol(ϕs))
+    end
     return Eigen(real(λs), ϕs)
 end
 
@@ -174,7 +176,7 @@ function (d::Diagonalizer{<:IRAM_ArnoldiMethod,Tv})(nev::Integer; kw...) where {
     return Eigen(λs, ϕs)
 end
 
-function (d::Diagonalizer{<:IRAM_KrylovKit, Tv})(nev::Integer; kw...) where {Tv}
+function (d::Diagonalizer{<:IRAM_KrylovKit, Tv})(nev::Integer; precond = true, kw...) where {Tv}
     if isfinite(d.point)
         λs, ϕv, _ = eigsolve(x -> d.lmap * x, d.method.precond, nev; kw...)
                             #  ishermitian = true, kw...) # ishermitian fails
@@ -183,12 +185,15 @@ function (d::Diagonalizer{<:IRAM_KrylovKit, Tv})(nev::Integer; kw...) where {Tv}
         λs, ϕv, _ = eigsolve(d.matrix, d.method.precond, nev, d.point > 0 ? :LR : :SR, 
                              Lanczos(kw...))
     end
-    d.method.precond .= zero(Tv)
-    foreach(ϕ -> (d.method.precond .+= ϕ), ϕv)
+    if precond
+        d.method.precond .= zero(Tv)
+        foreach(ϕ -> (d.method.precond .+= ϕ), ϕv)
+    end
     return Eigen(real(λs), hcat(ϕv))
 end
 
-function (d::Diagonalizer{<:LOBPCG_IterativeSolvers, Tv})(nev::Integer; largest = true, kw...) where {Tv}
+function (d::Diagonalizer{<:LOBPCG_IterativeSolvers, Tv})(nev::Integer; 
+        largest = true, precond = true, kw...) where {Tv}
     if size(d.method.precond) != (size(d.matrix, 1), nev)
         d.method = LOBPCG_IterativeSolvers(d.lmap, nev) # reset preconditioner
     end
@@ -196,7 +201,7 @@ function (d::Diagonalizer{<:LOBPCG_IterativeSolvers, Tv})(nev::Integer; largest 
     result = lobpcg(d.lmap, I, largest, d.method.precond; kw...)
     λs, ϕs = result.λ, result.X
     isfinite(d.point) && (λs .= 1 ./ λs .+ d.point)
-    foreach(i -> (d.method.precond[i] = ϕs[i]), eachindex(d.method.precond))
+    precond && foreach(i -> (d.method.precond[i] = ϕs[i]), eachindex(d.method.precond))
     return Eigen(real(λs), ϕs)
 end
 

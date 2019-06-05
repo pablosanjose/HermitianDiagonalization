@@ -3,7 +3,8 @@ module HermitianDiagonalization
 using LinearAlgebra, SparseArrays
 using LinearMaps, IterativeSolvers, ArnoldiMethod, Arpack, KrylovKit, Pardiso
 
-export diagonalizer, reset!, IRAM_Arpack, IRAM_ArnoldiMethod, IRAM_KrylovKit, LOBPCG_IterativeSolvers
+export diagonalizer, # reset!, 
+       Direct, IRAM_Arpack, IRAM_ArnoldiMethod, IRAM_KrylovKit, LOBPCG_IterativeSolvers
 
 ENV["OMP_NUM_THREADS"] = 4
 
@@ -90,7 +91,7 @@ function diagonalizer(h::AbstractArray{Tv}, ::Type{S} = defaultmethod;
     else
         lmap, engine = trivialmap(h), missing
     end
-    return Diagonalizer(h, S(lmap), lmap, point, codiag, engine)
+    return Diagonalizer(h, S(h), lmap, point, codiag, engine)
 end
 
 # # Resets preconditioner, optionally changes method - fails to call constructor (param)
@@ -101,32 +102,45 @@ end
 # Methods
 ############################################################
 
+struct Direct{Tv} <: AbstractEigenMethod{Tv}
+    dense::Matrix{Tv}
+end
+Direct(h::AbstractArray{Tv}) where {Tv} = Direct{Tv}(Matrix(h))
+
 struct IRAM_ArnoldiMethod{Tv} <: AbstractEigenMethod{Tv}
 end
-IRAM_ArnoldiMethod(lmap::LinearMap{Tv}) where {Tv} = IRAM_ArnoldiMethod{Tv}()
+IRAM_ArnoldiMethod(h::AbstractArray{Tv}) where {Tv} = IRAM_ArnoldiMethod{Tv}()
 
 struct IRAM_Arpack{Tv} <: AbstractEigenMethod{Tv}
     precond::Vector{Tv}
 end
-IRAM_Arpack(lmap::LinearMap{Tv}) where {Tv} = IRAM_Arpack(rand(Tv, size(lmap, 2)))
+IRAM_Arpack(h::AbstractArray{Tv}) where {Tv} = IRAM_Arpack(rand(Tv, size(h, 2)))
 
 struct IRAM_KrylovKit{Tv} <: AbstractEigenMethod{Tv}
     precond::Vector{Tv}
 end
-IRAM_KrylovKit(lmap::LinearMap{Tv}) where {Tv} = IRAM_KrylovKit(rand(Tv, size(lmap, 2)))
+IRAM_KrylovKit(h::AbstractArray{Tv}) where {Tv} = IRAM_KrylovKit(rand(Tv, size(h, 2)))
 
 struct LOBPCG_IterativeSolvers{Tv} <: AbstractEigenMethod{Tv}
     precond::Matrix{Tv}
 end
 
-LOBPCG_IterativeSolvers(lmap::LinearMap{Tv}, nev = 1) where {Tv} = 
-    LOBPCG_IterativeSolvers(rand(Tv, size(lmap,1), nev))
+LOBPCG_IterativeSolvers(h::AbstractArray{Tv}, nev = 1) where {Tv} = 
+    LOBPCG_IterativeSolvers(rand(Tv, size(h,1), nev))
 
 const defaultmethod = IRAM_KrylovKit
 
 ############################################################
 # Method interfaces
 ############################################################
+
+(d::Diagonalizer{<:Direct})(; kw...) = 
+    eigen(Hermitian(d.method.dense); sortby = sortfunc(d.point), kw...)
+function (d::Diagonalizer{<:Direct})(nev::Integer; kw...)
+    e = d(; kw...)
+    return Eigen(e.values[1:nev], e.vectors[:, 1:nev])
+end
+sortfunc(point) = isfinite(point) ? (λ -> abs(λ - point)) : (point > 0 ? reverse : identity)
 
 function (d::Diagonalizer{<:IRAM_Arpack,Tv})(nev::Integer; kw...) where {Tv}
     if isfinite(d.point)

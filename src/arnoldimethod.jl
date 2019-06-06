@@ -1,0 +1,19 @@
+struct ArnoldiMethod_IRAM{Tv} <: AbstractEigenMethod{Tv}
+end
+
+ArnoldiMethod_IRAM(h::AbstractArray{Tv}) where {Tv} = ArnoldiMethod_IRAM{Tv}()
+
+# defaultmethod(::Val{:ArnoldiMethod}) = ArnoldiMethod_IRAM
+
+function (d::Diagonalizer{<:ArnoldiMethod_IRAM,Tv})(nev::Integer; kw...) where {Tv}
+    if isfinite(d.point)
+        which = LM()
+    else
+        which = d.point > 0 ? LR() : SR()
+    end
+    decomp, _ = ArnoldiMethod.partialschur(d.lmap; nev = nev, which = which, kw...)
+    λs = real.(decomp.eigenvalues)
+    ϕs = decomp.Q
+    isfinite(d.point) && (λs .= 1 ./ λs .+ d.point)
+    return Eigen(λs, ϕs)
+end

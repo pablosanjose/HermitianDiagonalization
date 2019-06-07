@@ -1,7 +1,7 @@
 struct ArnoldiMethod_IRAM{Tv} <: AbstractEigenMethod{Tv}
 end
 
-ArnoldiMethod_IRAM(h::AbstractArray{Tv}) where {Tv} = ArnoldiMethod_IRAM{Tv}()
+(::Type{<:ArnoldiMethod_IRAM})(h::AbstractMatrix{Tv}) where {Tv} = ArnoldiMethod_IRAM{Tv}()
 
 # defaultmethod(::Val{:ArnoldiMethod}) = ArnoldiMethod_IRAM
 

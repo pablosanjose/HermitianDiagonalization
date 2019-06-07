@@ -2,7 +2,7 @@ struct Arpack_IRAM{Tv} <: AbstractEigenMethod{Tv}
     precond::Vector{Tv}
 end
 
-Arpack_IRAM(h::AbstractArray{Tv}) where {Tv} = Arpack_IRAM(rand(Tv, size(h, 2)))
+(::Type{<:Arpack_IRAM})(h::AbstractMatrix{Tv}) where {Tv} = Arpack_IRAM(rand(Tv, size(h, 2)))
 
 # defaultmethod(::Val{:Arpack}) = Arpack_IRAM
 

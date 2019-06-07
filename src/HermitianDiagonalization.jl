@@ -3,7 +3,7 @@ module HermitianDiagonalization
 using LinearAlgebra, SparseArrays, LinearMaps
 using Requires
 
-export diagonalizer, upper, lower,
+export diagonalizer, reset!, upper, lower,
        Direct, Arpack_IRAM, ArnoldiMethod_IRAM, KrylovKit_IRAM, IterativeSolvers_LOBPCG
 
 abstract type AbstractEigenMethod{Tv} end
@@ -66,6 +66,8 @@ end
 getpoint(point::Number) = Float64(point)
 getpoint(p::SpectrumEdge) = p.upper ? Inf : -Inf
 
+reset!(d::Diagonalizer{M}) where {M} = (d.method = M(d.matrix); d)
+
 ############################################################
 # Direct diagonalizer
 ############################################################
@@ -73,7 +75,7 @@ getpoint(p::SpectrumEdge) = p.upper ? Inf : -Inf
 struct Direct{Tv} <: AbstractEigenMethod{Tv}
     dense::Matrix{Tv}
 end
-Direct(h::AbstractArray{Tv}) where {Tv} = Direct{Tv}(Matrix(h))
+(::Type{<:Direct})(h::SparseMatrixCSC{Tv}) where {Tv} = Direct{Tv}(Matrix(h))
 
 (d::Diagonalizer{<:Direct})(; kw...) = 
     eigen(Hermitian(d.method.dense); sortby = sortfunc(d.point), kw...)
@@ -84,6 +86,8 @@ function (d::Diagonalizer{<:Direct})(nev::Integer; kw...)
 end
 
 sortfunc(point) = isfinite(point) ? (λ -> abs(λ - point)) : (point > 0 ? reverse : identity)
+
+reset!(d::Diagonalizer{<:Direct}) = d
 
 ############################################################
 # Default defaultmethods

@@ -2,7 +2,7 @@ struct KrylovKit_IRAM{Tv} <: AbstractEigenMethod{Tv}
     precond::Vector{Tv}
 end
 
-KrylovKit_IRAM(h::AbstractArray{Tv}) where {Tv} = KrylovKit_IRAM(rand(Tv, size(h, 2)))
+(::Type{<:KrylovKit_IRAM})(h::AbstractMatrix{Tv}) where {Tv} = KrylovKit_IRAM(rand(Tv, size(h, 2)))
 
 # defaultmethod(::Val{:KrylovKit}) = KrylovKit_IRAM
 

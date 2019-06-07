@@ -1,9 +1,11 @@
 struct IterativeSolvers_LOBPCG{Tv} <: AbstractEigenMethod{Tv}
     precond::Matrix{Tv}
+    IterativeSolvers_LOBPCG{Tv}(h::AbstractMatrix{Tv}, nev = 1) where {Tv} = 
+        new(rand(Tv, size(h,1), nev))
 end
 
-IterativeSolvers_LOBPCG(h::AbstractArray{Tv}, nev = 1) where {Tv} = 
-    IterativeSolvers_LOBPCG(rand(Tv, size(h,1), nev))
+IterativeSolvers_LOBPCG(h::AbstractMatrix{Tv}, nev = 1) where {Tv} = 
+    IterativeSolvers_LOBPCG{Tv}(h, nev)
 
 # defaultmethod(::Val{:IterativeSolvers}) = IterativeSolvers_LOBPCG
 

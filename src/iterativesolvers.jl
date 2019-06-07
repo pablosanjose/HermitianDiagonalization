@@ -9,8 +9,8 @@ IterativeSolvers_LOBPCG(h::AbstractMatrix{Tv}, nev = 1) where {Tv} =
 
 # defaultmethod(::Val{:IterativeSolvers}) = IterativeSolvers_LOBPCG
 
-function (d::Diagonalizer{<:IterativeSolvers_LOBPCG, Tv})(nev::Integer, edge::SpectrumEdge = upper; 
-        side = edge, precond = true, kw...) where {Tv}
+function (d::Diagonalizer{<:IterativeSolvers_LOBPCG, Tv})(nev::Integer; 
+        side = upper, precond = true, kw...) where {Tv}
     if size(d.method.precond) != (size(d.matrix, 1), nev)
         d.method = IterativeSolvers_LOBPCG(d.matrix, nev) # reset preconditioner
     end

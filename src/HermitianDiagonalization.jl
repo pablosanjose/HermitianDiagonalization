@@ -3,7 +3,7 @@ module HermitianDiagonalization
 using LinearAlgebra, SparseArrays, LinearMaps
 using Requires
 
-export diagonalizer, reset!, upper, lower,
+export diagonalizer, reset!, upper, lower, AbstractEigenMethod,
        Direct, Arpack_IRAM, ArnoldiMethod_IRAM, KrylovKit_IRAM, IterativeSolvers_LOBPCG
 
 abstract type AbstractEigenMethod{Tv} end
@@ -54,8 +54,38 @@ end
 Base.show(io::IO, d::Diagonalizer{M,Tv}) where {M,Tv} = print(io, 
     "Diagonaliser{$M} for $(size(d.matrix)) Hermitian matrix around point $(d.point)")
 
-diagonalizer(h, m; kw...) = diagonalizer(h, defaultmethod(m); kw...)
+#diagonalizer(h, m; kw...) = diagonalizer(h, defaultmethod(m); kw...)
 
+"""
+    diagonalizer(h::AbstractMatrix, method = Direct; point = 0.0, codiag = missing)
+
+Create and initialize a `Diagonalizer` of Hermitian matrix `h` (no need wrap it in 
+`Hermitian`) with random initial preconditioners. Diagonalization is performed around the 
+specified `point` in the spectrum using the specified `method`, to choose amongst `Direct`, 
+`Arpack_IRAM`, `ArnoldiMethod_IRAM`, `KrylovKit_IRAM` and `IterativeSolvers_LOBPCG`. The 
+corresponding package needs to be loaded (e.g. `using Arpack`) for the method to become 
+available, except for `Direct` which uses the `eigen` method in `LinearAlgebra`.
+
+To compute `nev::Integer` eigenvectors and eigenvalues of `h` using a diagonalizer 
+`d = diagonalizer(h, ...)` run `d(nev; kw...)`. The result is given in the form of an `Eigen` 
+object (see LinearAlgebra stdlib). For allowed keywords `kw` see the documentation of the 
+different `method`s.
+
+# Examples
+```jldoctest
+julia> using Arpack, SparseArrays
+
+julia> h = sprand(10^3, 10^3, 10^-2); h = h + h'; d = diagonalizer(h, Arpack_IRAM, point = 0.1)
+Diagonaliser{Arpack_IRAM{Float64}} for (1000, 1000) Hermitian matrix around point 0.1
+
+julia> d(4).values
+4-element Array{Float64,1}:
+ 0.10165764052779397
+ 0.09520587982702707
+ 0.10605045570396891
+ 0.08574843542711974
+```
+"""
 function diagonalizer(h::AbstractArray{Tv}, ::Type{S} = Direct; 
                       point = 0.0, codiag = missing) where {Tv,S<:AbstractEigenMethod}
     ishermitian(h) || error("Matrix is non-Hermitian")
@@ -66,6 +96,12 @@ end
 getpoint(point::Number) = Float64(point)
 getpoint(p::SpectrumEdge) = p.upper ? Inf : -Inf
 
+
+"""
+    reset!(d::Diagonalizer)
+
+Resets the preconditioners in `d` to a random value.
+"""
 reset!(d::Diagonalizer{M}) where {M} = (d.method = M(d.matrix); d)
 
 ############################################################

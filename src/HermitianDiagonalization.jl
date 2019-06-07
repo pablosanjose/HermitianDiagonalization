@@ -54,8 +54,6 @@ end
 Base.show(io::IO, d::Diagonalizer{M,Tv}) where {M,Tv} = print(io, 
     "Diagonaliser{$M} for $(size(d.matrix)) Hermitian matrix around point $(d.point)")
 
-#diagonalizer(h, m; kw...) = diagonalizer(h, defaultmethod(m); kw...)
-
 """
     diagonalizer(h::AbstractMatrix, method = Direct; point = 0.0, codiag = missing)
 
@@ -65,6 +63,8 @@ specified `point` in the spectrum using the specified `method`, to choose amongs
 `Arpack_IRAM`, `ArnoldiMethod_IRAM`, `KrylovKit_IRAM` and `IterativeSolvers_LOBPCG`. The 
 corresponding package needs to be loaded (e.g. `using Arpack`) for the method to become 
 available, except for `Direct` which uses the `eigen` method in `LinearAlgebra`.
+
+See also `ParidoSI` for options to use advanced shift-and-invert methods using MKL Pardiso.
 
 To compute `nev::Integer` eigenvectors and eigenvalues of `h` using a diagonalizer 
 `d = diagonalizer(h, ...)` run `d(nev; kw...)`. The result is given in the form of an `Eigen` 
@@ -96,7 +96,6 @@ end
 getpoint(point::Number) = Float64(point)
 getpoint(p::SpectrumEdge) = p.upper ? Inf : -Inf
 
-
 """
     reset!(d::Diagonalizer)
 
@@ -124,12 +123,5 @@ end
 sortfunc(point) = isfinite(point) ? (λ -> abs(λ - point)) : (point > 0 ? reverse : identity)
 
 reset!(d::Diagonalizer{<:Direct}) = d
-
-############################################################
-# Default defaultmethods
-############################################################
-
-# @inline defaultmethod(m::Symbol) = defaultmethod(Val(m))
-# @inline defaultmethod(m::Module) = defaultmethod(Val(first(fullname(m))))
 
 end # module

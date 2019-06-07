@@ -3,8 +3,6 @@ end
 
 (::Type{<:ArnoldiMethod_IRAM})(h::AbstractMatrix{Tv}) where {Tv} = ArnoldiMethod_IRAM{Tv}()
 
-# defaultmethod(::Val{:ArnoldiMethod}) = ArnoldiMethod_IRAM
-
 function (d::Diagonalizer{<:ArnoldiMethod_IRAM,Tv})(nev::Integer; kw...) where {Tv}
     if isfinite(d.point)
         which = ArnoldiMethod.LM()

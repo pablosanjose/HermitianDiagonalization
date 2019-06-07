@@ -4,8 +4,6 @@ end
 
 (::Type{<:Arpack_IRAM})(h::AbstractMatrix{Tv}) where {Tv} = Arpack_IRAM(rand(Tv, size(h, 2)))
 
-# defaultmethod(::Val{:Arpack}) = Arpack_IRAM
-
 function (d::Diagonalizer{<:Arpack_IRAM,Tv})(nev::Integer; precond = true, kw...) where {Tv}
     if isfinite(d.point)
         which = :LM

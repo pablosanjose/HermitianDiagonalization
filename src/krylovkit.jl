@@ -4,8 +4,6 @@ end
 
 (::Type{<:KrylovKit_IRAM})(h::AbstractMatrix{Tv}) where {Tv} = KrylovKit_IRAM(rand(Tv, size(h, 2)))
 
-# defaultmethod(::Val{:KrylovKit}) = KrylovKit_IRAM
-
 function (d::Diagonalizer{<:KrylovKit_IRAM, Tv})(nev::Integer; precond = true, kw...) where {Tv}
     if isfinite(d.point)
         λs, ϕv, _ = KrylovKit.eigsolve(x -> d.lmap * x, d.method.precond, nev; kw...)

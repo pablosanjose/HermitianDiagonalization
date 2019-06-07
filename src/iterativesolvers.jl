@@ -7,13 +7,13 @@ IterativeSolvers_LOBPCG(h::AbstractArray{Tv}, nev = 1) where {Tv} =
 
 # defaultmethod(::Val{:IterativeSolvers}) = IterativeSolvers_LOBPCG
 
-function (d::Diagonalizer{<:IterativeSolvers_LOBPCG, Tv})(nev::Integer; 
-        largest = true, precond = true, kw...) where {Tv}
+function (d::Diagonalizer{<:IterativeSolvers_LOBPCG, Tv})(nev::Integer, edge::SpectrumEdge = upper; 
+        side = edge, precond = true, kw...) where {Tv}
     if size(d.method.precond) != (size(d.matrix, 1), nev)
-        d.method = IterativeSolvers_LOBPCG(d.lmap, nev) # reset preconditioner
+        d.method = IterativeSolvers_LOBPCG(d.matrix, nev) # reset preconditioner
     end
-    largest = ifelse(isfinite(d.point), largest, d.point > 0)
-    result = IterativeSolvers.lobpcg(d.lmap, I, largest, d.method.precond; kw...)
+    largest = ifelse(isfinite(d.point), side === upper , d.point > 0)
+    result = IterativeSolvers.lobpcg(d.lmap, largest, d.method.precond; kw...)
     λs, ϕs = result.λ, result.X
     isfinite(d.point) && (λs .= 1 ./ λs .+ d.point)
     precond && foreach(i -> (d.method.precond[i] = ϕs[i]), eachindex(d.method.precond))

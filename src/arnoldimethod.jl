@@ -7,9 +7,9 @@ ArnoldiMethod_IRAM(h::AbstractArray{Tv}) where {Tv} = ArnoldiMethod_IRAM{Tv}()
 
 function (d::Diagonalizer{<:ArnoldiMethod_IRAM,Tv})(nev::Integer; kw...) where {Tv}
     if isfinite(d.point)
-        which = LM()
+        which = ArnoldiMethod.LM()
     else
-        which = d.point > 0 ? LR() : SR()
+        which = d.point > 0 ? ArnoldiMethod.LR() : ArnoldiMethod.SR()
     end
     decomp, _ = ArnoldiMethod.partialschur(d.lmap; nev = nev, which = which, kw...)
     λs = real.(decomp.eigenvalues)

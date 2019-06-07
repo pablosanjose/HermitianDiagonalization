@@ -3,7 +3,7 @@ module HermitianDiagonalization
 using LinearAlgebra, SparseArrays, LinearMaps
 using Requires
 
-export diagonalizer,
+export diagonalizer, upper, lower,
        Direct, Arpack_IRAM, ArnoldiMethod_IRAM, KrylovKit_IRAM, IterativeSolvers_LOBPCG
 
 abstract type AbstractEigenMethod{Tv} end
@@ -19,9 +19,16 @@ end
 # LinearMap
 ############################################################
 
-trivialmap(h::AbstractArray) = LinearMap(h, ishermitian = true)
+struct SpectrumEdge 
+    upper::Bool
+end
 
-function shiftinvert(h::AbstractArray{Tv}, shift::Number) where {Tv}
+const upper = SpectrumEdge(true)
+const lower = SpectrumEdge(false)
+
+linearmap(h::AbstractArray, ::SpectrumEdge) = LinearMap(h, ishermitian = true), missing
+
+function linearmap(h::AbstractArray{Tv}, shift::Number) where {Tv}
     fac = lu(h - Tv(shift) * I)
     lmap = let fac = fac
         LinearMap{Tv}((x, y) -> ldiv!(x, fac, y), size(h)...,
@@ -46,20 +53,17 @@ end
 Base.show(io::IO, d::Diagonalizer{M,Tv}) where {M,Tv} = print(io, 
 "Diagonaliser{$M} for $(size(d.matrix)) Hermitian matrix around point $(d.point)")
 
-# diagonalizer(h, m; kw...) = diagonalizer(h, defaultmethod(m); kw...)
+diagonalizer(h, m; kw...) = diagonalizer(h, defaultmethod(m); kw...)
 
 function diagonalizer(h::AbstractArray{Tv}, ::Type{S} = Direct; 
                       point = 0.0, codiag = missing) where {Tv,S<:AbstractEigenMethod}
     ishermitian(h) || error("Matrix is non-Hermitian")
-    if isfinite(getpoint(point))
-        lmap, engine = shiftinvert(h, point)
-    else
-        lmap, engine = trivialmap(h), missing
-    end
+    lmap, engine = linearmap(h, point)
     return Diagonalizer(h, S(h), lmap, getpoint(point), engine, codiag)
 end
 
 getpoint(point::Number) = point
+getpoint(p::SpectrumEdge) = p.upper ? Inf : -Inf
 
 ############################################################
 # Direct diagonalizer
@@ -80,11 +84,11 @@ end
 
 sortfunc(point) = isfinite(point) ? (λ -> abs(λ - point)) : (point > 0 ? reverse : identity)
 
-# ############################################################
-# # Default defaultmethods
-# ############################################################
+############################################################
+# Default defaultmethods
+############################################################
 
-# defaultmethod(m::Symbol) = defaultmethod(Val(m))
-# defaultmethod(m::Module) = defaultmethod(Val(first(fullname(m))))
+# @inline defaultmethod(m::Symbol) = defaultmethod(Val(m))
+# @inline defaultmethod(m::Module) = defaultmethod(Val(first(fullname(m))))
 
 end # module

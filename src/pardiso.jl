@@ -11,7 +11,7 @@ PardisoShift(p::Number; verbose = false) = PardisoShift(p, verbose)
 
 getpoint(p::PardisoShift) = p.point
 
-function shiftinvert(h::AbstractArray{Tv}, p::PardisoShift) where {Tv}
+function linearmap(h::AbstractArray{Tv}, p::PardisoShift) where {Tv}
     ps = pardisosolver(;verbose = p.verbose)
     _set_matrixtype!(ps, Tv)
     hp = Pardiso.get_matrix(ps, h - Tv(p.point) * I, :N)

@@ -13,6 +13,7 @@ function __init__()
     @require KrylovKit = "0b1a1467-8014-51b9-945f-bf0ae24f4b77" include("krylovkit.jl")
     @require Arpack = "7d9fca2a-8960-54d3-9f78-7d1dccf2cb97" include("arpack.jl")
     @require ArnoldiMethod = "ec485272-7323-5ecc-a04f-4719b315124d" include("arnoldimethod.jl")
+    @require IterativeSolvers = "42fd0dbc-a981-5370-80f2-aaf504508153" include("iterativesolvers.jl")
 end
 
 ############################################################
@@ -51,7 +52,7 @@ mutable struct Diagonalizer{M<:AbstractEigenMethod,Tv,A<:AbstractArray{Tv},L<:Li
 end
 
 Base.show(io::IO, d::Diagonalizer{M,Tv}) where {M,Tv} = print(io, 
-"Diagonaliser{$M} for $(size(d.matrix)) Hermitian matrix around point $(d.point)")
+    "Diagonaliser{$M} for $(size(d.matrix)) Hermitian matrix around point $(d.point)")
 
 diagonalizer(h, m; kw...) = diagonalizer(h, defaultmethod(m); kw...)
 

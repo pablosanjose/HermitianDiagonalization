@@ -64,7 +64,8 @@ specified `point` in the spectrum using the specified `method`, to choose amongs
 corresponding package needs to be loaded (e.g. `using Arpack`) for the method to become 
 available, except for `Direct` which uses the `eigen` method in `LinearAlgebra`.
 
-See also `ParidoSI` for options to use advanced shift-and-invert methods using MKL Pardiso.
+See also `ParidoShifrt` for options to use advanced shift-and-invert methods using tne 
+MKL Pardiso library.
 
 To compute `nev::Integer` eigenvectors and eigenvalues of `h` using a diagonalizer 
 `d = diagonalizer(h, ...)` run `d(nev; kw...)`. The result is given in the form of an `Eigen` 

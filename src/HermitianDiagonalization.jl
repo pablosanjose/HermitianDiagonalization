@@ -62,7 +62,7 @@ function diagonalizer(h::AbstractArray{Tv}, ::Type{S} = Direct;
     return Diagonalizer(h, S(h), lmap, getpoint(point), engine, codiag)
 end
 
-getpoint(point::Number) = point
+getpoint(point::Number) = Float64(point)
 getpoint(p::SpectrumEdge) = p.upper ? Inf : -Inf
 
 ############################################################

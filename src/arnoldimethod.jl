@@ -3,7 +3,8 @@ end
 
 (::Type{<:ArnoldiMethod_IRAM})(h::AbstractMatrix{Tv}) where {Tv} = ArnoldiMethod_IRAM{Tv}()
 
-function (d::Diagonalizer{<:ArnoldiMethod_IRAM,Tv})(nev::Integer; kw...) where {Tv}
+function (d::Diagonalizer{<:ArnoldiMethod_IRAM,Tv})(nev::Integer; precond = false, kw...) where {Tv}
+    precond && @warn "ArnoldiMethod_IRAM does not yet support preconditioning"
     if isfinite(d.point)
         which = ArnoldiMethod.LM()
     else

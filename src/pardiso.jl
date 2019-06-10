@@ -16,10 +16,10 @@ of the MKL Pardiso library for the shift-and-invert Lanczos method (it should be
 
 # Example
 ```jldoctest
-julia> using Pardiso; h = rand(10,10); h = h' + h;
+julia> using Pardiso, Arpack; h = rand(10,10); h = h' + h;
 
-julia> d = diagonalizer(h, point = PardisoShift(0.0))
-Diagonaliser{Direct{Float64}} for (10, 10) Hermitian matrix around point 0.0
+julia> d = diagonalizer(h, Arpack_IRAM, point = PardisoShift(0.0))
+Diagonaliser{Arpack_IRAM{Float64}} for (10, 10) Hermitian matrix around point 0.0
 ```
 """
 PardisoShift(p::Number; verbose = false) = PardisoShift(p, verbose)

@@ -3,7 +3,7 @@ module HermitianDiagonalization
 using LinearAlgebra, SparseArrays, LinearMaps
 using Requires
 
-export diagonalizer, reset!, upper, lower, AbstractEigenMethod,
+export diagonalizer, diagonalizer!, reset!, upper, lower, AbstractEigenMethod,
        Direct, Arpack_IRAM, ArnoldiMethod_IRAM, KrylovKit_IRAM, IterativeSolvers_LOBPCG
 
 abstract type AbstractEigenMethod{Tv} end
@@ -87,11 +87,13 @@ julia> d(4).values
  0.08574843542711974
 ```
 """
-function diagonalizer(h::AbstractArray{Tv}, ::Type{S} = Direct; 
+diagonalizer(h::AbstractArray, ::Type{S} = Direct; kw...) where {S<:AbstractEigenMethod} = 
+    diagonalizer(h, S(h); kw...)
+function diagonalizer(h::AbstractArray{Tv}, method::S, 
                       point = 0.0, codiag = missing) where {Tv,S<:AbstractEigenMethod}
     ishermitian(h) || error("Matrix is non-Hermitian")
     lmap, engine = linearmap(h, point)
-    return Diagonalizer(h, S(h), lmap, getpoint(point), engine, codiag)
+    return Diagonalizer(h, method, lmap, getpoint(point), engine, codiag)
 end
 
 getpoint(point::Number) = Float64(point)
@@ -103,6 +105,18 @@ getpoint(p::SpectrumEdge) = p.upper ? Inf : -Inf
 Resets the preconditioners in `d` to a random value.
 """
 reset!(d::Diagonalizer{M}) where {M} = (d.method = M(d.matrix); d)
+
+"""
+    diagonalizer!(d::Diagonalizer, h; kw...)
+
+Modifies `d` with a new matrix `h` and keyword arguments `kw`, keeping its predonditioners
+if they exist. See `diagonalizer` for `kw` options.
+"""
+function diagonalizer!(d::Diagonalizer, h; kw...) 
+    e = diagonalizer(h, d.method; kw...)
+    d.matrix, d.lmap, d.point, d.engine, d.codiag = e.matrix, e.lmap, e.point, e.engine, e.codiag
+    return d
+end
 
 ############################################################
 # Direct diagonalizer
